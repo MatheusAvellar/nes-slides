@@ -1,0 +1,25 @@
+; arqcomp.asm
+LoadPalettes                     = $C046
+LatchController                  = $C116
+palette                          = $E000
+ReadLeftDone                     = $C147
+LoadPalettesLoop                 = $C055
+Draw                             = $C0FE
+ReadRightDone                    = $C13B
+nescallback                      = $FFFA
+PollControllerLoop               = $C123
+Update                           = $C148
+slide1                           = $E020
+HelloWorld                       = $C060
+vblankwait1                      = $C017
+vblankwait2                      = $C03C
+clrmem                           = $C01D
+RESET                            = $C000
+ReadLeft                         = $C13C
+NMI                              = $C0E3
+ScreenPaddingTop                 = $C076
+Loop                             = $C0E0
+InitializeState                  = $C0D8
+ReadRight                        = $C130
+PollController                   = $C121
+PrintSlideLoop                   = $C094
