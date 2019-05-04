@@ -61,6 +61,8 @@ slideHi       .rs 1  ; High byte of slide address
 counterLo     .rs 1  ; Helper variables for double
 counterHi     .rs 1  ; for-loop
 
+drawing       .rs 1  ; for-loop
+
 ;-----------------------------------------------------------;
 ;                          Bank 0                           ;
 ;-----------------------------------------------------------;
@@ -126,6 +128,14 @@ vblankwait2:      ; Second wait for vblank, PPU is ready after this
   lda #%00000000  ; Reset PPU Mask
   sta PPUMASK
 
+;;;;;;;;;;;;;;;;;;;;
+; Initialize game variables
+InitializeState:
+  lda #$00
+  sta controller   ; controller = 0
+  lda #$01
+  sta slide        ; slide = 2
+
 ;;;;;;;;;;;;;;;;;;;;;;
 ; Load game palletes
 LoadPalettes:
@@ -133,8 +143,9 @@ LoadPalettes:
 
   ; Tell CPU where $2007 should be stored, that is, where is VRAM.
   ; VRAM is what the CPU uses to store stuff being drawn, I think.
-  ; This address can go from $0000 to $3FFF. Setting here to $3F00
-  ; for unknown reasons.
+  ; This address can go from $0000 to $3FFF.
+  ; The palette for the background runs from VRAM $3F00 to $3F0F
+  ; The palette for the sprites runs from $3F10 to $3F1F
   lda #$3F              ; = 0x0011 1111
   sta PPUADDR           ; write the high byte of $3F00 address
   lda #$00              ; = 0x0000 0000
@@ -143,9 +154,6 @@ LoadPalettes:
   ldx #$00              ; start loop counter at 0
   LoadPalettesLoop:
     lda palette, x        ; load data from address (palette + x)
-                            ; 1st time through loop it will load palette+0
-                            ; 2nd time through loop it will load palette+1
-                            ; ...
     sta PPUDATA             ; write to PPU (tinyurl.com/NES-PPUDATA)
     inx                   ; X = X + 1
     cpx #$20              ; Compare X to hex $20, decimal 32 - copying 32 bytes
@@ -169,14 +177,13 @@ HelloWorld:
   ; * NTSC colors. PAL and Dendy swaps green and red
   sta PPUMASK      ; tinyurl.com/NES-PPUMASK
 
-  ;first 8 lines we are going to leave blank
-  lda PPUSTATUS         ; read PPU status to reset the high/low latch
+  bit PPUSTATUS         ; read PPU status to reset the high/low latch
 
   ; Tell CPU where $2007 should be stored, that is, where is VRAM.
   ; VRAM is what the CPU uses to store stuff being drawn, I think.
   ; This address can go from $0000 to $3FFF. Setting here to $2000
   ; for unknown reasons.
-  lda #$20              ; = 0x0110 0000
+  lda #$20              ; = 0x0010 0000
   sta PPUADDR           ; write the high byte of $2000 address
   lda #$00              ; = 0x0000 0000
   sta PPUADDR           ; write the low byte of $2000 address
@@ -193,12 +200,7 @@ HelloWorld:
     ; NOTE: On NTSC it seems to eat up the first line for some reason
   bne ScreenPaddingTop
 
-  ;; START OF PRINTING MECHANIC ;;
-  ; We need to copy more that 256 (0xFF)
-  lda #LOW(slide1)     ; Get low byte of <slide1>
-  sta slideLo          ; Store it in <slideLo>
-  lda #HIGH(slide1)    ; Get high byte of <slide1>
-  sta slideHi          ; Store it in <slideHi>
+  jsr UpdateSprites
 
   ; Each slide has 27 rows, 32 columns
   ; (28 * 32) = 896 bytes = 0x0380
@@ -211,18 +213,24 @@ HelloWorld:
                        ; to 0; so indirect index mode works in the square
                        ; bracket. That is, "lda [backgroundLo], y" works, but
                        ; simply "lda [backgroundLo]" doesn't.
+
+  jsr PrintSlideLoop   ; Jump to subroutine PrintSlideLoop, then return here
+  ;jmp InitializeState  ; Go to InitializeState
+  jmp Loop
+
 PrintSlideLoop:
+  ;lda slide
   lda [slideLo], y     ; get current character (sprite)
   ;cmp #$FD             ; Compare with 0xFD (red modifier)
 
   sta PPUDATA          ; draw to screen (tinyurl.com/NES-PPUDATA)
 
   clc                  ; clear the carry bit
-  lda slideLo          ;\
-  adc #$01             ; } slideLo++
-  sta slideLo          ;/
+  lda slideLo          ;
+  adc #$01             ; slideLo++
+  sta slideLo          ;
 
-  lda slideHi          ; if there is a carry (overflow) 
+  lda slideHi          ; if there is a carry (overflow)
   adc #$00             ; from the previous  slideLo++
   sta slideHi          ; then add 1 to slideHi
 
@@ -244,7 +252,6 @@ PrintSlideLoop:
   CMP #$00             ; see if the high byte is zero, if not loop
   BNE PrintSlideLoop   ; if the loop counter isn't 0, keep copying
 
-
   ;; Reenable rendering
   lda #%00011110   ; enable sprites, enable background, no clipping on left side
   ;     BGRsbMmG
@@ -259,22 +266,12 @@ PrintSlideLoop:
   ;     +--------- Emphasize blue*
   ; * NTSC colors. PAL and Dendy swaps green and red
   sta PPUMASK      ; tinyurl.com/NES-PPUMASK
-
-  lda #$00         ; Scroll X
-  sta PPUSCROLL
-  lda #$00         ; Scroll Y
-  sta PPUSCROLL      ; tinyurl.com/NES-PPUSCROLL
-
-;;;;;;;;;;;;;;;;;;;;
-; Initialize game variables
-InitializeState:
-  lda #$00
-  sta controller   ; controller = 0
-  sta slide        ; slide = 0
+  rts
 
 Loop:
   ; infinite loop to keep the game from exiting
   ; NMI will interrupt this loop to run the game
+  jsr Update
   jmp Loop
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -292,8 +289,8 @@ NMI: ; Non-Maskable Interrupt (draws screen)
   lda #$02
   sta OAMDMA    ; set the high byte $(02)00 of the RAM address, start the transfer (tinyurl.com/NES-OAMDMA)
 
-  jsr Draw      ; Jump to subroutine Draw (and then return here)
   jsr Update    ; Jump to subroutine Update (and then return here)
+  ;jsr Draw      ; Jump to subroutine Draw (and then return here)
 
   ;; Scroll stuff
   ;; Music stuff
@@ -306,9 +303,8 @@ NMI: ; Non-Maskable Interrupt (draws screen)
   rti        ; Return from interrupt
 
 Draw:
-  ;;;;;jsr DrawSprites  ; Jump to subroutine DrawSprites (and then return here)
+  ;jsr HelloWorld   ; Jump to subroutine PrintSlideLoop (and then return here)
 
-  ; TODO: Changing this also doesn't seem to have any effect
   ; This is the PPU clean up section, so rendering the next frame starts properly.
   lda #%10010000   ; enable NMI, sprites from Pattern Table 0, background from Pattern Table 1
   ;     VPHBSINN
@@ -349,13 +345,41 @@ Draw:
 
   rts                ; Return from subroutine
 
-  .include "controller.asm"
+UpdateSprites:
+  lda #$01           ; Check if selected slide is 1
+  cmp slide          ;
+  beq LoadSlide1     ; If so, load slide 1
+
+  lda #$02           ; Otherwise, check if selected slide is 2
+  cmp slide          ;
+  beq LoadSlide2     ; If so, load slide 2
+
+  LoadSlide1:
+    lda #01
+    sta slide
+    ; We need to copy more that 256 (0xFF)
+    lda #LOW(slide1)     ; Get low byte of <slide1>
+    sta slideLo          ; Store it in <slideLo>
+    lda #HIGH(slide1)    ; Get high byte of <slide1>
+    sta slideHi          ; Store it in <slideHi>
+    rts
+
+  LoadSlide2:
+    lda #LOW(slide2)     ; Get low byte of <slide1>
+    sta slideLo          ; Store it in <slideLo>
+    lda #HIGH(slide2)    ; Get high byte of <slide1>
+    sta slideHi          ; Store it in <slideHi>
+    rts
+
+
 Update:
   jsr LatchController
   jsr PollController
   jsr ReadLeft
   jsr ReadRight
   rts
+
+  .include "controller.asm"
 
 ;-----------------------------------------------------------;
 ;                          Bank 1                           ;
@@ -371,36 +395,7 @@ palette:
   ;;  Character Palletes (4-7)
   .db $30,$3F,$38,$16,  $30,$3F,$38,$16,  $30,$3F,$38,$16,  $30,$3F,$38,$16
 
-slide1:
-  .db $1A,"      Ano de introdu",$18,$0E,"o       ",$1B
-  .db "                                "
-  .db " 1983: Jap",$0E,"o, como ",$80,$81,$82,$83,$84,$85,$86,$87,$88,$84,$89,"  "
-  .db "       (Family Computer, FC ou  "
-  .db "       FamiCom)                 "
-  .db "                                "
-  .db " 1985: NY e LA como Nintendo    "
-  .db "       Entertainment System     "
-  .db "                                "
-  .db " 1986: EUA e partes da Europa   "
-  .db "                                "
-  .db " 1987: Austr",$0C,"lia, resto da      "
-  .db "       Europa                   "
-  .db "                                "
-  .db " 1989: Coreia do Sul, como      "
-  .db "       ",$8A,$8B,$20,$8C,$8D,$8E," (Hyundai Comboy)  "
-  .db "                                "
-  .db " 1993: Brasil, como Nintendinho "
-  .db "                                "
-  .db "                                "
-  .db "                                "
-  .db "                                "
-  .db "                                "
-  .db "                                "
-  .db "                                "
-  .db "                                "
-  .db "                           1/12 "
-  .db "                                "
-  .db $FF  ; End of slide
+  .include "slides.asm"
 
   .org $FFFA     ; first of the three vectors starts here
 nescallback:

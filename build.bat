@@ -1,2 +1,2 @@
-NESASM3 arqcomp.asm
+NESASM3 main.asm
 @pause
