@@ -1,3 +1,5 @@
+;; TODO: Fix spritesheet! Accents and whatnot
+
 slide1:
   .db $1A,"      Ano de introdu",$18,$0E,"o       ",$1B
   .db "                                "

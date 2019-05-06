@@ -42,11 +42,21 @@ ReadRight:
   lda #01
   sta drawing
 
+  clc
   ldy slide
   iny
   sty slide            ; slide++
 
-  jsr SpriteThing
+  ;; Disable rendering
+  lda #%00000000   ; hide sprites, hide background
+  sta PPUMASK      ; tinyurl.com/NES-PPUMASK
+
+  jsr UpdateSprites
+  jsr DrawSprites
+
+  ;; Reenable rendering
+  lda #%00011110   ; enable sprites, enable background, no clipping on left side
+  sta PPUMASK      ; tinyurl.com/NES-PPUMASK
 
   ; handling this button is done
   ReadRightDone:
@@ -56,73 +66,3 @@ ReadRight:
     lda #00
     sta drawing
     rts
-
-SpriteThing:
-  jsr UpdateSprites
-
-  lda #%00000000   ; hide sprites, hide background
-  sta PPUMASK      ; tinyurl.com/NES-PPUMASK
-
-  bit PPUSTATUS         ; read PPU status to reset the high/low latch
-
-  lda #$20              ; = 0x0010 0000
-  sta PPUADDR           ; write the high byte of $2000 address
-  lda #$00              ; = 0x0000 0000
-  sta PPUADDR           ; write the low byte of $2000 address
-
-  lda #$20        ; Character to be used (space)
-  ldx #$00        ; Start index variable at 0
-  ScreenPaddingTop__:
-    sta PPUDATA   ; Write character to screen
-    inx           ; X++
-    cpx #$40      ; There are 32 sprites per row on screen
-  bne ScreenPaddingTop__
-
-  ; Each slide has 27 rows, 32 columns
-  ; (28 * 32) = 896 bytes = 0x0380
-  lda #$80
-  sta counterLo
-  lda #$03
-  sta counterHi
-
-  ldy #$00             ; Y will always be 0, we just need it to be initialized
-                       ; to 0; so indirect index mode works in the square
-                       ; bracket. That is, "lda [backgroundLo], y" works, but
-                       ; simply "lda [backgroundLo]" doesn't.
-
-PrintSlideLoop__:
-  lda [slideLo], y     ; get current character (sprite)
-
-  sta PPUDATA          ; draw to screen (tinyurl.com/NES-PPUDATA)
-
-  clc                  ; clear the carry bit
-  lda slideLo          ;
-  adc #$01             ; slideLo++
-  sta slideLo          ;
-
-  lda slideHi          ; if there is a carry (overflow)
-  adc #$00             ; from the previous  slideLo++
-  sta slideHi          ; then add 1 to slideHi
-
-  ;; This basically functions as 2 nested FOR loops
-  ;; for(slideHi = 0; ; slideHi++)
-  ;;   for(slideLo = 0; ; slideLo++)
-  lda counterLo        ; load the counter low byte
-  sec                  ; set carry flag
-  sbc #$01             ; subtract (with borrow) by 1
-  STA counterLo        ; store the low byte of the counter
-  LDA counterHi        ; load the high byte
-  SBC #$00             ; sub 0, but there is a carry
-  STA counterHi        ; decrement the loop counter
-
-  LDA counterLo        ; load the low byte
-  CMP #$00             ; see if it is zero, if not loop
-  BNE PrintSlideLoop__
-  LDA counterHi
-  CMP #$00             ; see if the high byte is zero, if not loop
-  BNE PrintSlideLoop__   ; if the loop counter isn't 0, keep copying
-
-  ;; Reenable rendering
-  lda #%00011110   ; enable sprites, enable background, no clipping on left side
-  sta PPUMASK      ; tinyurl.com/NES-PPUMASK
-  rts
