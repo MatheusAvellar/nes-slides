@@ -21,26 +21,52 @@ ReadLeft:
   and #%00000010       ; only look at bit 1
 ; bit:     7   6   5   4   3   2   1   0
 ; button:  A   B  Sel Sta Up Down Left Right
-  beq ReadLeftDone     ; branch to ReadLeftDone if button is NOT pressed (0)
+  beq LeftNotPressed   ; branch to ReadLeftDone if button is NOT pressed (0)
 
-  ; ldy #$01
-  ; sty slide            ; slide = 2
+  lda leftdown
+  cmp #01
+  beq ReadLeftDone
+  lda #01
+  sta leftdown
 
-  ReadLeftDone:        ; handling this button is done
+  sec
+  ldy slide
+  dey
+  sty slide            ; slide--
+
+  ;; Disable rendering
+  lda #%00000000   ; hide sprites, hide background
+  sta PPUMASK      ; tinyurl.com/NES-PPUMASK
+
+  jsr UpdateSprites
+  jsr DrawSprites
+
+  ;; Reenable rendering
+  lda #%00011110   ; enable sprites, enable background, no clipping on left side
+  sta PPUMASK      ; tinyurl.com/NES-PPUMASK
+
+  ; handling this button is done
+  ReadLeftDone:
     rts
+
+  LeftNotPressed:
+    lda #00
+    sta leftdown
+    rts
+
 
 ReadRight:
   lda controller
   and #%00000001       ; only look at bit 0
 ; bit:     7   6   5   4   3   2   1   0
 ; button:  A   B  Sel Sta Up Down Left Right
-  beq RightNotPressed  ; branch to ReadRightDone if button is NOT pressed (0)
+  beq RightNotPressed  ; branch to RightNotPressed if button is NOT pressed (0)
 
-  lda drawing
+  lda rightdown
   cmp #01
   beq ReadRightDone
   lda #01
-  sta drawing
+  sta rightdown
 
   clc
   ldy slide
@@ -64,5 +90,5 @@ ReadRight:
 
   RightNotPressed:
     lda #00
-    sta drawing
+    sta rightdown
     rts

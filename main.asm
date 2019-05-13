@@ -23,7 +23,8 @@ slideHi       .rs 1  ; High byte of slide address
 counterLo     .rs 1  ; Helper variables for double
 counterHi     .rs 1  ; for-loop
 
-drawing       .rs 1  ; for-loop
+leftdown       .rs 1
+rightdown       .rs 1
 
 ;-----------------------------------------------------------;
 ;                          Bank 0                           ;

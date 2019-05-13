@@ -1,7 +1,7 @@
 ;; TODO: Fix spritesheet! Accents and whatnot
 
 slide1:
-  .db $1A,"      Ano de introdu",$18,$0E,"o       ",$1B
+  .db $10,"      Ano de introdu",$18,$0E,"o       ",$11
   .db "                                "
   .db " 1983: Jap",$0E,"o, como ",$80,$81,$82,$83,$84,$85,$86,$87,$88,$84,$89,"  "
   .db "       (Family Computer, FC ou  "
@@ -31,8 +31,8 @@ slide1:
   .db "                                "
 
 slide2:
-  .db "      Tecnologia usada no       "
-  .db $1A,"    processador e mem",$13,"ria     ",$1B
+  .db $10,"     Tecnologia usada no      ",$11
+  .db "     processador e mem",$13,"ria      "
   .db "                                "
   .db "                                "
   .db "                                "

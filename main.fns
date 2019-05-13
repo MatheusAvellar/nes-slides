@@ -1,14 +1,14 @@
 ; main.asm
-RightNotPressed                  = $C164
+RightNotPressed                  = $C18E
 LoadPalettes                     = $C050
 LatchController                  = $C116
 UpdateSprites                    = $C092
 LoadSlide1                       = $C0A0
 palette                          = $E000
 LoadSlide2                       = $C0B0
-ReadLeftDone                     = $C137
+ReadLeftDone                     = $C15B
 LoadPalettesLoop                 = $C05F
-ReadRightDone                    = $C163
+ReadRightDone                    = $C18D
 nescallback                      = $FFFA
 PollControllerLoop               = $C123
 Main                             = $C06A
@@ -24,6 +24,7 @@ NMI                              = $C085
 DrawSlide                        = $C0E0
 Loop                             = $C082
 InitializeState                  = $C046
+LeftNotPressed                   = $C15C
 DrawScreenPaddingTop             = $C0CC
-ReadRight                        = $C138
+ReadRight                        = $C162
 PollController                   = $C121
