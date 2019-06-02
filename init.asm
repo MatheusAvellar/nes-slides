@@ -3,7 +3,7 @@ RESET:
   cld          ; disable decimal mode
   ldx #$40     ; loads value 0x40 on X
   stx $4017    ; disable APU frame IRQ
-  ldx #$ff     ; loads value 0xFF on X
+  ldx #$FF     ; loads value 0xFF on X
   txs          ; Set up stack             (puts 0xFF on Stack pointer)
   inx          ; now X = 0                (x++ -> 0xFF + 1)
   stx PPUCTRL  ; disable NMI

@@ -1,2 +1,2 @@
-NESASM3 main.asm
+NESASM3 main.asm && main.nes
 @pause

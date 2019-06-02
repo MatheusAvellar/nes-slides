@@ -23,8 +23,10 @@ slideHi       .rs 1  ; High byte of slide address
 counterLo     .rs 1  ; Helper variables for double
 counterHi     .rs 1  ; for-loop
 
-leftdown       .rs 1
-rightdown       .rs 1
+leftdown      .rs 1
+rightdown     .rs 1
+
+patterntable  .rs 1
 
 ;-----------------------------------------------------------;
 ;                          Bank 0                           ;
@@ -56,38 +58,9 @@ Main:
 
   ;; Reenable rendering
   lda #%00011110   ; enable sprites, enable background, no clipping on left side
-  ;     BGRsbMmG
-  ;     ||||||||
-  ;     |||||||+-- Greyscale (0: normal color, 1: produce a greyscale display)
-  ;     ||||||+--- 1: Show background in leftmost 8 pixels of screen, 0: Hide
-  ;     |||||+---- 1: Show sprites in leftmost 8 pixels of screen, 0: Hide
-  ;     ||||+----- 1: Show background
-  ;     |||+------ 1: Show sprites
-  ;     ||+------- Emphasize red*
-  ;     |+-------- Emphasize green*
-  ;     +--------- Emphasize blue*
-  ; * NTSC colors. PAL and Dendy swaps green and red
   sta PPUMASK      ; tinyurl.com/NES-PPUMASK
 
-  ;; Enable NMI
-  lda #%10000000
-  ;     VPHBSINN
-  ;     ||||||||
-  ;     ||||||++-- Base nametable address
-  ;     ||||||     (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
-  ;     |||||+---- VRAM address increment per CPU read/write of PPUDATA
-  ;     |||||      (0: add 1, going across; 1: add 32, going down)
-  ;     ||||+----- Sprite pattern table address for 8x8 sprites
-  ;     ||||       (0: $0000; 1: $1000; ignored in 8x16 mode)
-  ;     |||+------ Background pattern table address (0: $0000; 1: $1000)
-  ;     ||+------- Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
-  ;     |+-------- PPU master/slave select
-  ;     |          (0: read backdrop from EXT pins; 1: output color on EXT pins)
-  ;     +--------- Generate an NMI at the start of the
-  ;                vertical blanking interval (0: off; 1: on)
-  sta PPUCTRL
-
-  jmp Loop
+  jsr LoadPatternTable0
 
 Loop:
   ; Infinite loop to keep the game from exiting. The NMI
@@ -98,8 +71,7 @@ NMI:
   ; NMI stands for Non-Maskable Interrupt: The NES will
   ; trigger this function on every frame so we can (and
   ; should) update things here
-  jsr LatchController
-  jsr PollController
+  jsr LatchAndPollController
   jsr ReadLeft
   jsr ReadRight
 
@@ -119,7 +91,7 @@ NMI:
 palette:
   ;; Background Palletes (0-3)
   .db $30,$3F,$38,$16,  $30,$3F,$38,$16,  $30,$3F,$38,$16,  $30,$3F,$38,$16
-  ;;  Character Palletes (4-7)
+  ;; Character Palletes (4-7)
   .db $30,$3F,$38,$16,  $30,$3F,$38,$16,  $30,$3F,$38,$16,  $30,$3F,$38,$16
 
   .include "slides.asm"

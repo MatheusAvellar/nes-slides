@@ -1,9 +1,9 @@
 ;; TODO: Fix spritesheet! Accents and whatnot
 
 slide1:
-  .db $10,"      Ano de introdu",$18,$0E,"o       ",$11
+  .db $10,"      Ano de introdu",$87,$83,"o       ",$11
   .db "                                "
-  .db " 1983: Jap",$0E,"o, como ",$80,$81,$82,$83,$84,$85,$86,$87,$88,$84,$89,"  "
+  .db " 1983: Jap",$C6,"o, como ",$40,$40,$40,$40,$40,$40,$40,$40,$40,$40,$40,"  "
   .db "       (Family Computer, FC ou  "
   .db "       FamiCom)                 "
   .db "                                "
@@ -12,15 +12,15 @@ slide1:
   .db "                                "
   .db " 1986: EUA e partes da Europa   "
   .db "                                "
-  .db " 1987: Austr",$0C,"lia, resto da      "
+  .db " 1987: Austr",$A0,"lia, resto da      "
   .db "       Europa                   "
   .db "                                "
   .db " 1989: Coreia do Sul, como      "
-  .db "       ",$8A,$8B,$20,$8C,$8D,$8E," (Hyundai Comboy)  "
+  .db "       ",$40,$40," ",$40,$40,$40," (Hyundai Comboy)  "
   .db "                                "
   .db " 1993: Brasil, como Nintendinho "
   .db "                                "
-  .db "                                "
+  .db $FF,$12,$FE,"                             "
   .db "                                "
   .db "                                "
   .db "                                "
@@ -32,7 +32,7 @@ slide1:
 
 slide2:
   .db $10,"     Tecnologia usada no      ",$11
-  .db "     processador e mem",$13,"ria      "
+  .db "     processador e mem",$A2,"ria      "
   .db "                                "
   .db "                                "
   .db "                                "
