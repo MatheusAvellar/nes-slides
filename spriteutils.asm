@@ -25,7 +25,12 @@ UpdateSprites:
     rts
 
 DrawSprites:
-  bit PPUSTATUS         ; read PPU status to reset the high/low latch
+;  bit PPUSTATUS         ; read PPU status to reset the high/low latch
+vwait:
+  ; http://nesdev.com/NESprgmn.txt recommends waiting for VBlank to end
+  ; before writing a lot of data to 
+  lda PPUSTATUS
+  bpl vwait
 
   lda #$20              ; = 0x0010 0000
   sta PPUADDR           ; write the high byte of $2000 address
@@ -53,15 +58,8 @@ DrawSprites:
                        ; simply "lda [slideLo]" doesn't.
   DrawSlide:
     lda [slideLo], y     ; get current character (sprite)
-    cmp #$FE
-    beq SwapTable0      ; If we reach a #FE, swap to table 0
-    cmp #$FF
-    beq SwapTable1      ; If we reach a #FE, swap to table 0
-
-    lda [slideLo], y
     sta PPUDATA          ; draw to screen (tinyurl.com/NES-PPUDATA)
 
-    ContinueDrawing:
     clc                  ; clear the carry bit
     lda slideLo          ;
     adc #$01             ; slideLo++
@@ -90,45 +88,3 @@ DrawSprites:
     cmp #$00
   bne DrawSlide
   rts
-
-LoadPatternTable0:
-  ;; Read PPU status to clear vblank flag
-  bit PPUSTATUS
-  ;; Enable NMI, Pattern Table 0
-  lda #%10000000
-  ;     VPHBSINN
-  ;     ||||||||
-  ;     ||||||++-- Base nametable address
-  ;     ||||||     (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
-  ;     |||||+---- VRAM address increment per CPU read/write of PPUDATA
-  ;     |||||      (0: add 1, going across; 1: add 32, going down)
-  ;     ||||+----- Sprite pattern table address for 8x8 sprites
-  ;     ||||       (0: $0000; 1: $1000; ignored in 8x16 mode)
-  ;     |||+------ Background pattern table address (0: $0000; 1: $1000)
-  ;     ||+------- Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
-  ;     |+-------- PPU master/slave select
-  ;     |          (0: read backdrop from EXT pins; 1: output color on EXT pins)
-  ;     +--------- Generate an NMI at the start of the
-  ;                vertical blanking interval (0: off; 1: on)
-  sta PPUCTRL
-  rts
-
-LoadPatternTable1:
-  ;; Read PPU status to clear vblank flag
-  bit PPUSTATUS
-  ;; Enable NMI, Pattern Table 1
-  lda #%10010000
-  sta PPUCTRL
-  rts
-
-SwapTable0:
-  lda #$11
-  sta PPUDATA
-  jsr LoadPatternTable0
-  jmp ContinueDrawing
-
-SwapTable1:
-  lda #$11
-  sta PPUDATA
-  jsr LoadPatternTable1
-  jmp ContinueDrawing

@@ -5,9 +5,9 @@
 ;-----------------------------------------------------------;
 ; The 16 byte iNES header gives the emulator all
 ; the information about the game including mapper,
-; graphics mirroring, and PRG/CHR sizes.
+; graphics mirroring, and program/CHR sizes.
 
-  .inesprg 1   ; 1x 16KB PRG code
+  .inesprg 1   ; 1x 16KB program code
   .ineschr 1   ; 1x  8KB CHR data
   .inesmap 0   ; mapper 0 = NROM, no bank swapping
   .inesmir 1   ; background mirroring
@@ -38,6 +38,24 @@ patterntable  .rs 1
   .include "init.asm"
 
 Main:
+  ;; Generate NMI, pattern table 0
+  lda #%10000000
+  ;     VPHBSINN
+  ;     ||||||||
+  ;     ||||||++-- Base nametable address
+  ;     ||||||     (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
+  ;     |||||+---- VRAM address increment per CPU read/write of PPUDATA
+  ;     |||||      (0: add 1, going across; 1: add 32, going down)
+  ;     ||||+----- Sprite pattern table address for 8x8 sprites
+  ;     ||||       (0: $0000; 1: $1000; ignored in 8x16 mode)
+  ;     |||+------ Background pattern table address (0: $0000; 1: $1000)
+  ;     ||+------- Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
+  ;     |+-------- PPU master/slave select
+  ;     |          (0: read backdrop from EXT pins; 1: output color on EXT pins)
+  ;     +--------- Generate an NMI at the start of the
+  ;                vertical blanking interval (0: off; 1: on)
+  sta PPUCTRL
+
   ;; Disable rendering
   lda #%00000000   ; hide sprites, hide background
   ;     BGRsbMmG
@@ -59,8 +77,6 @@ Main:
   ;; Reenable rendering
   lda #%00011110   ; enable sprites, enable background, no clipping on left side
   sta PPUMASK      ; tinyurl.com/NES-PPUMASK
-
-  jsr LoadPatternTable0
 
 Loop:
   ; Infinite loop to keep the game from exiting. The NMI

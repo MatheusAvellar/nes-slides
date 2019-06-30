@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title> SLIDE MAKER </title>
+  <style>
+body {
+  text-align: center;
+  font-family: sans-serif;
+  overflow-y: scroll;
+  margin: 0;
+}
+pre {
+  text-align: left;
+  font-family: monospace;
+}
+main {
+  font-family: monospace;
+  padding-top: 48px;
+  padding-bottom: 24px;
+  border: 1px solid;
+  display: grid;
+  margin: 8px auto;
+  width: 768px;
+  grid-template-columns: repeat(32,24px);
+  grid-template-rows: repeat(27,24px);
+  background-color: #eee;
+}
+main > span {
+  background-color: #fff;
+  background-color: var(--bg);
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
+  line-height: 24px;
+  text-align: center;
+  box-sizing: border-box;
+
+  color: transparent;
+  text-shadow: 0 0 0 #000;
+  text-shadow: 0 0 0 var(--fg);
+}
+main > span:focus {
+  outline: 0;
+  border-bottom: 3px solid #000;
+}
+main.grid > span {
+  outline: 1px dashed #b0b0b0;
+}
+label {
+  user-select: none;
+}
+button {
+  border: 0;
+  background-color: #606dbc;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 2px;
+  box-shadow: 0 2px 0 #465298;
+  transition: 0.1s ease all;
+  outline: none;
+  font-family: "Roboto Condensed", sans-serif;
+}
+button:focus {
+  background-color: #7986d2;
+}
+button:active {
+  transform: translateY(2px);
+  box-shadow: 0px 0px 0px #465298;
+  background-color: #7986d2;
+}
+button[disabled] {
+  transform: translateY(2px);
+  box-shadow: 0px 0px 0px #465298;
+  background-color: #9ea2bb;
+}
+[type="checkbox"] {
+  border-radius: 2px;
+  border: 2px solid #465298;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+  outline: none;
+  margin: 0;
+}
+[type="checkbox"]::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  transform: translateY(-25%) scale(0);
+  background-color: #465298;
+  display: inline-block;
+  transition: all 0.1s ease;
+}
+[type="checkbox"]:checked::after {
+  transform: translateY(-25%) scale(1);
+}
+dl {
+  text-align: left;
+  padding: 15px;
+}
+dl:not(:empty)::before {
+  content: "Please define the following terms:";
+}
+dt {
+  font-weight: bold;
+}
+dd {
+  display: inline-block;
+  width: 25px;
+  position: relative;
+  border-bottom: 2px solid;
+}
+dd::before {
+  content: "$";
+  position: absolute;
+  left: -10px;
+  opacity: .75;
+}
+  </style>
+</head>
+<body onload="init();">
+  <main class="grid"></main>
+  <section>
+    <label>
+      <input type="checkbox" checked onchange="toggleGrid();"/>
+      Gridlines
+    </label>
+    <button id="clearbtn">Clear</button>
+    <button onclick="save(this);">Export</button>
+    <dl id="dl"></dl>
+    <pre id="export_res"></pre>
+  </section>
+  <script>
+    const HEIGHT = 27;
+    const WIDTH = 32;
+    const slide = [];
+    const main = document.querySelector("main");
+
+    const colors = {
+      "$00":"rgb(124,124,124)",
+      "$01":"rgb(0,0,252)",
+      "$02":"rgb(0,0,188)",
+      "$03":"rgb(68,40,188)",
+      "$04":"rgb(148,0,132)",
+      "$05":"rgb(168,0,32)",
+      "$06":"rgb(168,16,0)",
+      "$07":"rgb(136,20,0)",
+      "$08":"rgb(80,48,0)",
+      "$09":"rgb(0,120,0)",
+      "$0A":"rgb(0,104,0)",
+      "$0B":"rgb(0,88,0)",
+      "$0C":"rgb(0,64,88)",
+      "$0D":"rgb(0,0,0)",
+      "$0E":"rgb(0,0,0)",
+      "$0F":"rgb(0,0,0)",
+      "$10":"rgb(188,188,188)",
+      "$11":"rgb(0,120,248)",
+      "$12":"rgb(0,88,248)",
+      "$13":"rgb(104,68,252)",
+      "$14":"rgb(216,0,204)",
+      "$15":"rgb(228,0,88)",
+      "$16":"rgb(248,56,0)",
+      "$17":"rgb(228,92,16)",
+      "$18":"rgb(172,124,0)",
+      "$19":"rgb(0,184,0)",
+      "$1A":"rgb(0,168,0)",
+      "$1B":"rgb(0,168,68)",
+      "$1C":"rgb(0,136,136)",
+      "$1D":"rgb(0,0,0)",
+      "$1E":"rgb(0,0,0)",
+      "$1F":"rgb(0,0,0)",
+      "$20":"rgb(248,248,248)",
+      "$21":"rgb(60,188,252)",
+      "$22":"rgb(104,136,252)",
+      "$23":"rgb(152,120,248)",
+      "$24":"rgb(248,120,248)",
+      "$25":"rgb(248,88,152)",
+      "$26":"rgb(248,120,88)",
+      "$27":"rgb(252,160,68)",
+      "$28":"rgb(248,184,0)",
+      "$29":"rgb(184,248,24)",
+      "$2A":"rgb(88,216,84)",
+      "$2B":"rgb(88,248,152)",
+      "$2C":"rgb(0,232,216)",
+      "$2D":"rgb(120,120,120)",
+      "$2E":"rgb(0,0,0)",
+      "$2F":"rgb(0,0,0)",
+      "$30":"rgb(252,252,252)",
+      "$31":"rgb(164,228,252)",
+      "$32":"rgb(184,184,248)",
+      "$33":"rgb(216,184,248)",
+      "$34":"rgb(248,184,248)",
+      "$35":"rgb(248,164,192)",
+      "$36":"rgb(240,208,176)",
+      "$37":"rgb(252,224,168)",
+      "$38":"rgb(248,216,120)",
+      "$39":"rgb(216,248,120)",
+      "$3A":"rgb(184,248,184)",
+      "$3B":"rgb(184,248,216)",
+      "$3C":"rgb(0,252,252)",
+      "$3D":"rgb(216,216,216)",
+      "$3E":"rgb(0,0,0)",
+      "$3F":"rgb(0,0,0)"
+    };
+
+    function loadColor(color) {
+      const c = color
+        .toUpperCase()
+        .replace(/[^$0-9A-F,]/g,"")
+        .split(",");
+      main.style.setProperty("--bg",colors[c[0]]);
+      main.style.setProperty("--fg",colors[c[1]]);
+    }
+    loadColor("$30,$3F");
+
+    function clear() {
+      for(let i = 0; i < HEIGHT; i++) {
+        for(let j = 0; j < WIDTH; j++) {
+          slide[i][j].innerText = "";
+        }
+      }
+    }
+    document.getElementById("clearbtn").onclick = clear;
+
+    function toggleGrid() {
+      main.classList.toggle("grid");
+    }
+
+    function get(i,j) {
+      if(i < 0) i = 0;
+      if(j < 0) j = 0;
+      if(i > HEIGHT-1) i = HEIGHT-1;
+      if(j > WIDTH-1) j = WIDTH-1;
+      return slide[i][j];
+    }
+
+    function init() {
+      let first_span;
+      for(let i = 0; i < HEIGHT; i++) {
+        slide.push([]);
+        for(let j = 0; j < WIDTH; j++) {
+          const span = document.createElement("span");
+          span.setAttribute("contenteditable", true);
+          span.onkeydown = e => {
+            if(e.key.length === 1
+            || e.key === "Backspace"
+            || e.key === "Delete")
+              span.innerText = "";
+
+            switch(e.key) {
+              case "Backspace":
+              case "ArrowLeft":
+                (span.previousElementSibling||get(i,j-1)).focus();
+                break;
+              case "ArrowRight":
+                (span.nextElementSibling||get(i,j+1)).focus();
+                break;
+              case "ArrowUp":
+                get(i-1,j).focus();
+                break;
+              case "ArrowDown":
+                get(i+1,j).focus();
+                break;
+              case "Home":
+                get(i,0).focus();
+                break;
+              case "End":
+                get(i,WIDTH-1).focus();
+                break;
+              case "PageUp":
+                get(i-5,j).focus();
+                break;
+              case "PageDown":
+                get(i+5,j).focus();
+                break;
+              case "Enter":
+                get(i+1,0).focus();
+                e.preventDefault();
+                break;
+            }
+          }
+          span.oninput = e => {
+            if(!e.data) return;
+            if(e.data === " "
+            || e.data.length > 1) {
+              e.preventDefault();
+              span.innerText = "";
+            }
+            span.nextElementSibling.focus();
+          };
+          main.appendChild(span);
+          slide[i].push(span);
+        }
+      }
+    }
+
+    function isHex(t) {
+      return /[0-9A-F]/.test(t.toUpperCase()) && (t.length === 2);
+    }
+    const defs = {};
+    const dl = document.getElementById("dl");
+    function requestChar(ch) {
+      const dt = document.createElement("dt");
+      dt.innerText = ch;
+      const dd = document.createElement("dd");
+      dd.setAttribute("contenteditable", true);
+      dd.oninput = () => {
+        if(isHex(dd.innerText)) {
+          defs[dt.innerText] = dd.innerText;
+        }
+      };
+      dl.appendChild(dt);
+      dl.appendChild(dd);
+    }
+
+    function save(e) {
+      let err = false;
+      let requested = "";
+      let output = "slide:\n";
+      for(let i = 0; i < HEIGHT; i++) {
+        output += ".db \"";
+        for(let j = 0; j < WIDTH; j++) {
+          let char = slide[i][j].innerText;
+          if(char.length > 1) {
+            slide[i][j].innerText = "";
+          } else if(char.length === 1) {
+            const def = defs[char];
+            if(def) {
+              output += `",$${def},"`;
+            } else if(/[ -~]/g.test(char)) {
+              output += char;
+            } else if(requested.indexOf(char) < 0) {
+              requestChar(char);
+              requested += char;
+              err = true;
+            }
+          } else {
+            output += " ";
+          }
+        }
+        output += "\"\n";
+      }
+      if(err) return;
+      output += ".db \"                                \"";
+      document.getElementById("export_res").innerText = output;
+    }
+  </script>
+</body>
+</html>

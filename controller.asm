@@ -1,16 +1,19 @@
 LatchAndPollController:
-  LDA #$01
-  STA JOYSTICK1
-  LDA #$00
-  STA JOYSTICK1    ; tell both the controllers to latch buttons
+  ; "Strobe" the joypad before read to reset it
+  lda #$01
+  sta JOYSTICK1
+  lda #$00
+  sta JOYSTICK1
 
   ldx #$00            ; for(x = 0; x < 8; x++)
   PollControllerLoop:
-    lda JOYSTICK1     ; load joystick 1
-    LSR A             ; shift right
-    ROL controller    ; rotate left button vector in mem location $0003
+    ; Load all pressed states to the 'controller'
+    ; variable by using 8 consecutive reads to $4016
+    lda JOYSTICK1
+    lsr A              ; shift right
+    rol controller     ; 
     inx
-    cpx #$08          ; if x==8, break (8 buttons total)
+    cpx #$08          ; if x==8, break
     bne PollControllerLoop
   rts
 

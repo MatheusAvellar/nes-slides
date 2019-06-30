@@ -7,7 +7,7 @@ RESET:
   txs          ; Set up stack             (puts 0xFF on Stack pointer)
   inx          ; now X = 0                (x++ -> 0xFF + 1)
   stx PPUCTRL  ; disable NMI
-  stx PPUMASK  ; PPUMASK - disable rendering
+  stx PPUMASK  ; disable rendering
   stx $4010    ; disable DMC IRQs         (puts 0x00 on $4010 [part of controller/audio access ports])
 
   ; If the user presses Reset during vblank, the PPU may reset
@@ -40,7 +40,7 @@ clrmem:             ; Here we set everything to 0x00
   sta $0500, x
   sta $0600, x
   sta $0700, x
-  lda #$FE
+  lda #$55
   sta $0200, x
 
   inx              ; x is now 0x01
