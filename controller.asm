@@ -35,16 +35,8 @@ ReadLeft:
   dey
   sty slide            ; slide--
 
-  ;; Disable rendering
-  lda #%00000000   ; hide sprites, hide background
-  sta PPUMASK      ; tinyurl.com/NES-PPUMASK
-
   jsr UpdateSprites
   jsr DrawSprites
-
-  ;; Reenable rendering
-  lda #%00011110   ; enable sprites, enable background, no clipping on left side
-  sta PPUMASK      ; tinyurl.com/NES-PPUMASK
 
   ; handling this button is done
   ReadLeftDone:
@@ -73,16 +65,8 @@ ReadRight:
   iny
   sty slide            ; slide++
 
-  ;; Disable rendering
-  lda #%00000000   ; hide sprites, hide background
-  sta PPUMASK      ; tinyurl.com/NES-PPUMASK
-
   jsr UpdateSprites
   jsr DrawSprites
-
-  ;; Reenable rendering
-  lda #%00011110   ; enable sprites, enable background, no clipping on left side
-  sta PPUMASK      ; tinyurl.com/NES-PPUMASK
 
   ; handling this button is done
   ReadRightDone:

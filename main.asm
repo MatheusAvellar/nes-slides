@@ -26,7 +26,7 @@ counterHi     .rs 1  ; for-loop
 leftdown      .rs 1
 rightdown     .rs 1
 
-patterntable  .rs 1
+finishedSlide .rs 1
 
 ;-----------------------------------------------------------;
 ;                          Bank 0                           ;
@@ -56,27 +56,8 @@ Main:
   ;                vertical blanking interval (0: off; 1: on)
   sta PPUCTRL
 
-  ;; Disable rendering
-  lda #%00000000   ; hide sprites, hide background
-  ;     BGRsbMmG
-  ;     ||||||||
-  ;     |||||||+-- Greyscale (0: normal color, 1: produce a greyscale display)
-  ;     ||||||+--- 1: Show background in leftmost 8 pixels of screen, 0: Hide
-  ;     |||||+---- 1: Show sprites in leftmost 8 pixels of screen, 0: Hide
-  ;     ||||+----- 1: Show background
-  ;     |||+------ 1: Show sprites
-  ;     ||+------- Emphasize red*
-  ;     |+-------- Emphasize green*
-  ;     +--------- Emphasize blue*
-  ; * NTSC colors. PAL and Dendy swaps green and red
-  sta PPUMASK      ; tinyurl.com/NES-PPUMASK
-
   jsr UpdateSprites
   jsr DrawSprites
-
-  ;; Reenable rendering
-  lda #%00011110   ; enable sprites, enable background, no clipping on left side
-  sta PPUMASK      ; tinyurl.com/NES-PPUMASK
 
 Loop:
   ; Infinite loop to keep the game from exiting. The NMI
@@ -106,9 +87,9 @@ NMI:
 
 palette:
   ;; Background Palletes (0-3)
-  .db $30,$3F,$38,$16,  $30,$3F,$38,$16,  $30,$3F,$38,$16,  $30,$3F,$38,$16
+  .db $30,$3F,$21,$16,  $30,$3F,$38,$16,  $30,$3F,$38,$16,  $30,$3F,$38,$16
   ;; Character Palletes (4-7)
-  .db $30,$3F,$38,$16,  $30,$3F,$38,$16,  $30,$3F,$38,$16,  $30,$3F,$38,$16
+  .db $30,$3F,$21,$16,  $30,$3F,$38,$16,  $30,$3F,$38,$16,  $30,$3F,$38,$16
 
   .include "slides.asm"
 

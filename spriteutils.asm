@@ -1,4 +1,5 @@
 UpdateSprites:
+
   lda #$01           ; Check if selected slide is 1
   cmp slide          ;
   beq LoadSlide1     ; If so, load slide 1
@@ -7,9 +8,22 @@ UpdateSprites:
   cmp slide          ;
   beq LoadSlide2     ; If so, load slide 2
 
+  lda #$03           ; Otherwise, check if selected slide is 3
+  cmp slide          ;
+  beq LoadSlide3     ; If so, load slide 3
+
+  lda #$04           ; Otherwise, check if selected slide is 4
+  cmp slide          ;
+  beq LoadSlide4     ; If so, load slide 4
+
+  lda #$05           ; Otherwise, check if selected slide is 5
+  cmp slide          ;
+  beq LoadSlide5     ; If so, load slide 5
+
+  lda #01
+  sta slide
+
   LoadSlide1:
-    lda #01
-    sta slide
     ; We need to copy more that 256 (0xFF)
     lda #LOW(slide1)     ; Get low byte of <slide1>
     sta slideLo          ; Store it in <slideLo>
@@ -18,19 +32,77 @@ UpdateSprites:
     rts
 
   LoadSlide2:
-    lda #LOW(slide2)     ; Get low byte of <slide1>
+    lda #LOW(slide2)     ; Get low byte of <slide2>
     sta slideLo          ; Store it in <slideLo>
-    lda #HIGH(slide2)    ; Get high byte of <slide1>
+    lda #HIGH(slide2)    ; Get high byte of <slide2>
     sta slideHi          ; Store it in <slideHi>
     rts
 
+  LoadSlide3:
+    lda #LOW(slide3)     ; Get low byte of <slide3>
+    sta slideLo          ; Store it in <slideLo>
+    lda #HIGH(slide3)    ; Get high byte of <slide3>
+    sta slideHi          ; Store it in <slideHi>
+    rts
+
+  LoadSlide4:
+    ;; Generate NMI, pattern table 0
+    lda #%10000000
+    sta PPUCTRL
+    _LoadSlide4:
+    lda #LOW(slide4)     ; Get low byte of <slide4>
+    sta slideLo          ; Store it in <slideLo>
+    lda #HIGH(slide4)    ; Get high byte of <slide4>
+    sta slideHi          ; Store it in <slideHi>
+    rts
+
+  LoadSlide5:
+    ;; Generate NMI, pattern table 1
+    lda #%10010000
+    sta PPUCTRL
+    jmp _LoadSlide4
+
+  ; LoadSlide6:
+  ;   ;; Generate NMI, pattern table 0
+  ;   lda #%10000000
+  ;   sta PPUCTRL
+  ;   lda #LOW(slide6)     ; Get low byte of <slide1>
+  ;   sta slideLo          ; Store it in <slideLo>
+  ;   lda #HIGH(slide6)    ; Get high byte of <slide1>
+  ;   sta slideHi          ; Store it in <slideHi>
+  ;   rts
+
+
 DrawSprites:
-;  bit PPUSTATUS         ; read PPU status to reset the high/low latch
-vwait:
+  ;; Disable rendering
+  lda #%00000000   ; hide sprites, hide background
+  ;     BGRsbMmG
+  ;     ||||||||
+  ;     |||||||+-- Greyscale (0: normal color, 1: produce a greyscale display)
+  ;     ||||||+--- 1: Show background in leftmost 8 pixels of screen, 0: Hide
+  ;     |||||+---- 1: Show sprites in leftmost 8 pixels of screen, 0: Hide
+  ;     ||||+----- 1: Show background
+  ;     |||+------ 1: Show sprites
+  ;     ||+------- Emphasize red*
+  ;     |+-------- Emphasize green*
+  ;     +--------- Emphasize blue*
+  ; * NTSC colors. PAL and Dendy swaps green and red
+  sta PPUMASK      ; tinyurl.com/NES-PPUMASK
+
+SpriteVBlankWait:
   ; http://nesdev.com/NESprgmn.txt recommends waiting for VBlank to end
-  ; before writing a lot of data to 
+  ; before writing a lot of data to the PPU
   lda PPUSTATUS
-  bpl vwait
+  bpl SpriteVBlankWait
+
+
+  ;;; TEST ;;;
+  lda #$00
+  cmp finishedSlide
+  beq DrawSlide
+
+  sta finishedSlide
+
 
   lda #$20              ; = 0x0010 0000
   sta PPUADDR           ; write the high byte of $2000 address
@@ -87,4 +159,13 @@ vwait:
     lda counterHi
     cmp #$00
   bne DrawSlide
+
+  ;;; TEST ;;;
+  lda #$01
+  sta finishedSlide
+
+  ;; Reenable rendering
+  lda #%00011110   ; enable sprites, enable background, no clipping on left side
+  sta PPUMASK      ; tinyurl.com/NES-PPUMASK
+
   rts

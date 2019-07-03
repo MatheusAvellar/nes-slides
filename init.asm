@@ -34,13 +34,13 @@ clrmem:             ; Here we set everything to 0x00
   sta $0100, x      ; Set $0100 + X = 0
   ; We skip $0200,x on purpose. Usually, RAM page 2 is used for the
   ; display list to be copied to OAM. OAM needs to be initialized to
-  ; $EF-$FF, not 0, or you'll get a bunch of garbage sprites at (0, 0).
+  ; $EF-$FF, not 0, or you'll get a bunch of garbage sprites at (0,0)
   sta $0300, x
   sta $0400, x
   sta $0500, x
   sta $0600, x
   sta $0700, x
-  lda #$55
+  lda #$FF         ; I'm still getting garbage sprites at (0,0) :c
   sta $0200, x
 
   inx              ; x is now 0x01
@@ -62,6 +62,7 @@ InitializeState:
   lda #$00
   sta controller   ; controller = 0
   lda #$01
+  sta finishedSlide; finishedSlide = 1
   sta slide        ; slide = 1
 
 ;;;;;;;;;;;;;;;;;;;;;;

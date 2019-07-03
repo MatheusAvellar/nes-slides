@@ -321,7 +321,7 @@ dd::before {
       let requested = "";
       let output = "slide:\n";
       for(let i = 0; i < HEIGHT; i++) {
-        output += ".db \"";
+        output += "  .db \"";
         for(let j = 0; j < WIDTH; j++) {
           let char = slide[i][j].innerText;
           if(char.length > 1) {
@@ -344,7 +344,7 @@ dd::before {
         output += "\"\n";
       }
       if(err) return;
-      output += ".db \"                                \"";
+      output += "  .db \"                                \"";
       document.getElementById("export_res").innerText = output;
     }
   </script>
