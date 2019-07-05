@@ -17,6 +17,31 @@ LatchAndPollController:
     bne PollControllerLoop
   rts
 
+ReadUp:
+  lda controller
+  and #%00001000       ; only look at bit 1
+; bit:     7   6   5   4   3   2   1   0
+; button:  A   B  Sel Sta Up Down Left Right
+  beq UpNotPressed   ; branch to ReadLeftDone if button is NOT pressed (0)
+
+  lda updown
+  cmp #01
+  beq ReadUpDone
+  lda #01
+  sta updown
+
+  jsr UpdateSprites
+  jsr DrawSprites
+
+  ; handling this button is done
+  ReadUpDone:
+    rts
+
+  UpNotPressed:
+    lda #00
+    sta updown
+    rts
+
 ReadLeft:
   lda controller
   and #%00000010       ; only look at bit 1

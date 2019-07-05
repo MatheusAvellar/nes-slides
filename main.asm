@@ -25,6 +25,7 @@ counterHi     .rs 1  ; for-loop
 
 leftdown      .rs 1
 rightdown     .rs 1
+updown        .rs 1
 
 finishedSlide .rs 1
 
@@ -71,6 +72,7 @@ NMI:
   jsr LatchAndPollController
   jsr ReadLeft
   jsr ReadRight
+  jsr ReadUp
 
   rti        ; Return from interrupt
 
