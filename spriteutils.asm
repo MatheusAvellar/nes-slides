@@ -18,6 +18,8 @@ UpdateSprites:
   ; We need to copy more than 256 (0xFF), so we save both
   ; the low and the high byte of the address
   LoadSlide1:
+    ;; Change to pattern table 1
+    lda #%10010000
     lda #LOW(slide1)     ; Get low byte of <slide1>
     sta slideLo          ; Store it in <slideLo>
     lda #HIGH(slide1)    ; Get high byte of <slide1>
@@ -25,6 +27,8 @@ UpdateSprites:
     rts
 
   LoadSlide2:
+    ;; Change to pattern table 0
+    lda #%10000000
     lda #LOW(slide2)     ; Get low byte of <slide2>
     sta slideLo          ; Store it in <slideLo>
     lda #HIGH(slide2)    ; Get high byte of <slide2>
@@ -102,7 +106,7 @@ LoadAttributeLoop:
   lda attribute, x      ; load data from address (attribute + the value in x)
   sta PPUDATA           ; write to PPU
   inx                   ; X++
-  cpx #$28              ; if X == 8, break - copying 8 bytes
+  cpx #$40              ; if X == 8, break - copying 8 bytes
   bne LoadAttributeLoop
 
   lda PPUSTATUS  ; Poke PPUSTATUS again (which seems to diminish visual glitches)
