@@ -43,7 +43,7 @@ clrmem:             ; Here we set everything to 0x00
   lda #$FF         ; I'm still getting garbage sprites at (0,0) :c
   sta $0200, x
 
-  inx              ; x is now 0x01
+  inx              ; X++
   bne clrmem
 
   ; Other things you can do between vblank waits are set up audio

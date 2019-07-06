@@ -10,8 +10,8 @@ LatchAndPollController:
     ; Load all pressed states to the 'controller'
     ; variable by using 8 consecutive reads to $4016
     lda JOYSTICK1
-    lsr A              ; shift right
-    rol controller     ; 
+    lsr A             ; shift right
+    rol controller    ; 
     inx
     cpx #$08          ; if x==8, break
     bne PollControllerLoop
